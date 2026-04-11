@@ -4,7 +4,7 @@ create table if not exists doctors(
 	name text not null,
 	email text unique not null,
 	address text not null,
-	working_hours_id int FOREIGN KEY REFERENCES working_hours(id)
+	working_hours_id int REFERENCES working_hours(id) no delete cascade
 );
 
 -- +goose Down
