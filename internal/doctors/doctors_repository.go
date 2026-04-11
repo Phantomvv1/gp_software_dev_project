@@ -180,10 +180,24 @@ func (p ProdRepository) DeleteDoctor(idStr string) error {
 	return nil
 }
 
-func (t *TestRepository) Register() error {
-	return nil
+func (t TestRepository) Register(doctor Doctor) (*Doctor, error) {
+	doctor.ID = 1
+	return &doctor, nil
 }
 
-func (t *TestRepository) GetDoctorByEmail() (*Doctor, error) {
-	return nil, nil
+func (t TestRepository) GetDoctorById(email string) (*Doctor, error) {
+	return &Doctor{
+		ID:      1,
+		Name:    "Test Doctor",
+		Email:   email,
+		Address: "Test Address",
+	}, nil
+}
+
+func (t TestRepository) UpdateDoctor(id string, doctor Doctor) (*Doctor, error) {
+	return &doctor, nil
+}
+
+func (t TestRepository) DeleteDoctor(id string) error {
+	return nil
 }
