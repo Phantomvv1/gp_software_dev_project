@@ -1,13 +1,11 @@
 package main
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"github.com/Phantomvv1/gp_software_dev_project/routes"
 )
 
 func main() {
-	r := gin.Default()
+	r := routes.GetRoutes()
 
-	r.Any("", func(c *gin.Context) { c.JSON(http.StatusOK, nil) })
+	r.Run(":42069")
 }
