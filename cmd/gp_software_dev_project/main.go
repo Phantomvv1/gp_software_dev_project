@@ -15,10 +15,11 @@ func main() {
 	doc := r.Group("/doctors")
 	doctorRepository := doctors.ProdRepository{}
 
-	doc.GET("", doctors.GetDoctorById(doctorRepository))
+	doc.GET("/:id", doctors.GetDoctorById(doctorRepository))
+	doc.GET("", doctors.GetAllDoctors(doctorRepository))
 	doc.POST("", doctors.RegisterDoctor(doctorRepository))
-	doc.PUT("", doctors.UpdateDoctor(doctorRepository))
-	doc.DELETE("", doctors.DeleteDoctor(doctorRepository))
+	doc.PUT("/:id", doctors.UpdateDoctor(doctorRepository))
+	doc.DELETE("/:id", doctors.DeleteDoctor(doctorRepository))
 
 	r.Run(":42069")
 }

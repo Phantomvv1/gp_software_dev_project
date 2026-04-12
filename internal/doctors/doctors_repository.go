@@ -13,15 +13,19 @@ import (
 )
 
 var (
-	parsingError        = errors.New("Error: unable to parse the id of the doctor")
-	dbConnectionError   = errors.New("Error: unable to connect to the database")
-	dbSelectDoctorError = errors.New("Error: unable to get the doctor from the database")
-	dbInsertDoctorError = errors.New("Error: unable to insert the information of the doctor into the database")
-	dbUpdateDoctorError = errors.New("Error: unable to update the doctor information in the database")
+	parsingError                      = errors.New("Error: unable to parse the id of the doctor")
+	dbConnectionError                 = errors.New("Error: unable to connect to the database")
+	dbSelectDoctorError               = errors.New("Error: unable to get the doctor from the database")
+	dbSelectAllDoctorsQueryError      = errors.New("Error: unable to get all the doctors from the database. Query error")
+	dbSelectAllDoctorsCollectionError = errors.New("Error: unable to get all the doctors from the database. Collection error")
+	dbInsertDoctorError               = errors.New("Error: unable to insert the information of the doctor into the database")
+	dbUpdateDoctorError               = errors.New("Error: unable to update the doctor information in the database")
+	dbDeleteDoctorError               = errors.New("Error: unable to delete the doctor from the database")
 )
 
 type doctorsRepository interface {
 	Register(doctor Doctor) (*Doctor, error)
+	GetAllDoctors(limit string) ([]*Doctor, error)
 	GetDoctorById(id string) (*Doctor, error)
 	UpdateDoctor(id string, doctor Doctor) (*Doctor, error)
 	DeleteDoctor(id string) error
@@ -62,6 +66,55 @@ func insertDoctorIntoDB(conn *pgx.Conn, doctor Doctor) (*Doctor, error) {
 	}
 
 	return &doctor, nil
+}
+
+func (p ProdRepository) GetAllDoctors(limit string) ([]*Doctor, error) {
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return nil, endpointerrors.EndpointError{
+			StatusCode: http.StatusInternalServerError,
+			Err:        dbConnectionError,
+		}
+	}
+	defer conn.Close(context.Background())
+
+	doctors, err := getAllDoctorsFromDB(conn, limit)
+	if err != nil {
+		return nil, endpointerrors.EndpointError{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return doctors, nil
+}
+
+func getAllDoctorsFromDB(conn *pgx.Conn, limit string) ([]*Doctor, error) {
+	query := "select id, name, email, address from doctors limit "
+	if limit != "0" && limit != "" {
+		query += limit
+	} else {
+		query += "20"
+	}
+
+	rows, err := conn.Query(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+		return nil, dbSelectAllDoctorsQueryError
+	}
+
+	doctors, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*Doctor, error) {
+		doctor := &Doctor{}
+		err := rows.Scan(&doctor.ID, &doctor.Name, &doctor.Email, &doctor.Address)
+		return doctor, err // if there is an error the function will return the error and nil as the doctor slice
+	})
+
+	if err != nil {
+		log.Println(err)
+		return nil, dbSelectAllDoctorsCollectionError
+	}
+
+	return doctors, err
 }
 
 func (p ProdRepository) GetDoctorById(idStr string) (*Doctor, error) {
@@ -165,16 +218,26 @@ func (p ProdRepository) DeleteDoctor(idStr string) error {
 	}
 	defer conn.Close(context.Background())
 
-	_, err = conn.Exec(context.Background(),
-		"delete from doctors where id=$1",
-		id,
-	)
-
+	err = deleteDoctor(conn, int(id))
 	if err != nil {
 		return endpointerrors.EndpointError{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
+	}
+
+	return nil
+}
+
+func deleteDoctor(conn *pgx.Conn, id int) error {
+	_, err := conn.Exec(context.Background(),
+		"delete from doctors where id=$1",
+		id,
+	)
+
+	if err != nil {
+		log.Println(err)
+		return dbDeleteDoctorError
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package doctors
 
 import (
-	"log"
 	"net/http"
 
 	endpointerrors "github.com/Phantomvv1/gp_software_dev_project/internal/endpoint_errors"
@@ -27,12 +26,26 @@ func RegisterDoctor(repository doctorsRepository) gin.HandlerFunc {
 		createdDoctor, err := repository.Register(doctor)
 		if err != nil {
 			err := err.(endpointerrors.EndpointError)
-			log.Println(err)
 			c.JSON(err.StatusCode, gin.H{"error": err.Error()})
 			return
 		}
 
 		c.JSON(http.StatusCreated, gin.H{"result": createdDoctor})
+	}
+}
+
+func GetAllDoctors(repo doctorsRepository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		limit := c.Query("limit")
+
+		doctors, err := repo.GetAllDoctors(limit)
+		if err != nil {
+			err := err.(endpointerrors.EndpointError)
+			c.JSON(err.StatusCode, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"result": doctors})
 	}
 }
 
@@ -42,7 +55,6 @@ func GetDoctorById(repository doctorsRepository) gin.HandlerFunc {
 		doctor, err := repository.GetDoctorById(id)
 		if err != nil {
 			err := err.(endpointerrors.EndpointError)
-			log.Println(err)
 			c.JSON(err.StatusCode, gin.H{"error": err.Error()})
 			return
 		}
@@ -64,7 +76,6 @@ func UpdateDoctor(repository doctorsRepository) gin.HandlerFunc {
 		updatedDoctor, err := repository.UpdateDoctor(id, doctor)
 		if err != nil {
 			err := err.(endpointerrors.EndpointError)
-			log.Println(err)
 			c.JSON(err.StatusCode, gin.H{"error": err.Error()})
 			return
 		}
@@ -80,7 +91,6 @@ func DeleteDoctor(repository doctorsRepository) gin.HandlerFunc {
 		err := repository.DeleteDoctor(id)
 		if err != nil {
 			err := err.(endpointerrors.EndpointError)
-			log.Println(err)
 			c.JSON(err.StatusCode, gin.H{"error": err.Error()})
 			return
 		}
