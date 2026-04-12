@@ -166,6 +166,7 @@ func (p ProdRepository) UpdateDoctor(idStr string, doctor Doctor) (*Doctor, erro
 			Err:        parsingError,
 		}
 	}
+	doctor.ID = int(id)
 
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -246,6 +247,13 @@ func deleteDoctor(conn *pgx.Conn, id int) error {
 func (t TestRepository) Register(doctor Doctor) (*Doctor, error) {
 	doctor.ID = 1
 	return &doctor, nil
+}
+
+func (t TestRepository) GetAllDoctors(s string) ([]*Doctor, error) {
+	return []*Doctor{
+		{ID: 1, Name: "Doctor1", Email: "email1", Address: "Address1"},
+		{ID: 2, Name: "Doctor2", Email: "email2", Address: "Address2"},
+	}, nil
 }
 
 func (t TestRepository) GetDoctorById(email string) (*Doctor, error) {
