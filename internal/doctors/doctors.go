@@ -8,14 +8,14 @@ import (
 )
 
 type Doctor struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
-	Email          string `json:"email"`
-	Address        string `json:"address"`
-	WorkingHoursID *int   `json:"working_hours_id,omitempty"`
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password,omitempty"`
+	Address  string `json:"address"`
 }
 
-func RegisterDoctor(repository doctorsRepository) gin.HandlerFunc {
+func RegisterDoctor(repository DoctorsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		doctor := Doctor{}
 		if err := c.ShouldBindJSON(&doctor); err != nil {
@@ -34,7 +34,7 @@ func RegisterDoctor(repository doctorsRepository) gin.HandlerFunc {
 	}
 }
 
-func GetAllDoctors(repo doctorsRepository) gin.HandlerFunc {
+func GetAllDoctors(repo DoctorsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		limit := c.Query("limit")
 
@@ -49,7 +49,7 @@ func GetAllDoctors(repo doctorsRepository) gin.HandlerFunc {
 	}
 }
 
-func GetDoctorById(repository doctorsRepository) gin.HandlerFunc {
+func GetDoctorById(repository DoctorsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		doctor, err := repository.GetDoctorById(id)
@@ -63,7 +63,7 @@ func GetDoctorById(repository doctorsRepository) gin.HandlerFunc {
 	}
 }
 
-func UpdateDoctor(repository doctorsRepository) gin.HandlerFunc {
+func UpdateDoctor(repository DoctorsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
@@ -84,7 +84,7 @@ func UpdateDoctor(repository doctorsRepository) gin.HandlerFunc {
 	}
 }
 
-func DeleteDoctor(repository doctorsRepository) gin.HandlerFunc {
+func DeleteDoctor(repository DoctorsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 

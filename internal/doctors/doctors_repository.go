@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/Phantomvv1/gp_software_dev_project/internal/auth"
 	endpointerrors "github.com/Phantomvv1/gp_software_dev_project/internal/endpoint_errors"
 	"github.com/jackc/pgx/v5"
 )
@@ -23,7 +24,7 @@ var (
 	dbDeleteDoctorError               = errors.New("Error: unable to delete the doctor from the database")
 )
 
-type doctorsRepository interface {
+type DoctorsRepository interface {
 	Register(doctor Doctor) (*Doctor, error)
 	GetAllDoctors(limit string) ([]*Doctor, error)
 	GetDoctorById(id string) (*Doctor, error)
@@ -44,6 +45,8 @@ func (p ProdRepository) Register(doctor Doctor) (*Doctor, error) {
 	}
 	defer conn.Close(context.Background())
 
+	doctor.Password = auth.SHA512(doctor.Password)
+
 	registeredDoctor, err := insertDoctorIntoDB(conn, doctor)
 	if err != nil {
 		return nil, endpointerrors.EndpointError{
@@ -57,8 +60,8 @@ func (p ProdRepository) Register(doctor Doctor) (*Doctor, error) {
 
 func insertDoctorIntoDB(conn *pgx.Conn, doctor Doctor) (*Doctor, error) {
 	err := conn.QueryRow(context.Background(),
-		"insert into doctors (name, email, address) values ($1, $2, $3) returning id",
-		doctor.Name, doctor.Email, doctor.Address,
+		"insert into doctors (name, email, password, address) values ($1, $2, $3, $4) returning id",
+		doctor.Name, doctor.Email, doctor.Password, doctor.Address,
 	).Scan(&doctor.ID)
 	if err != nil {
 		log.Println(err)
@@ -148,8 +151,8 @@ func (p ProdRepository) GetDoctorById(idStr string) (*Doctor, error) {
 
 func getDoctorFromDB(conn *pgx.Conn, id int) (*Doctor, error) {
 	doctor := Doctor{}
-	err := conn.QueryRow(context.Background(), "select id, name, email, address, working_hours_id from doctors where id = $1", id).
-		Scan(&doctor.ID, &doctor.Name, &doctor.Email, &doctor.Address, &doctor.WorkingHoursID)
+	err := conn.QueryRow(context.Background(), "select id, name, email, address from doctors where id = $1", id).
+		Scan(&doctor.ID, &doctor.Name, &doctor.Email, &doctor.Address)
 	if err != nil {
 		log.Println(err)
 		return nil, dbSelectDoctorError
