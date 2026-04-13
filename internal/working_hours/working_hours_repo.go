@@ -29,12 +29,27 @@ var (
 type WorkingHoursRepository interface {
 	GetWorkingHours(doctorID int, date time.Time) ([]*WorkingHour, error)
 	AddPermanentChange(doctorID int, effectiveFrom time.Time, hour WorkingHour) error
-	AddOverride(doctorID int, override WorkingHourOverride) error
+	SetWorkingHours(doctorID int, hours []WorkingHour) error
+	AddOverride(override WorkingHourOverride) error
 	DeleteOverride(id string, doctorID int) error
 }
 
 type ProdRepository struct{}
-type TestRepository struct{}
+type TestRepository struct {
+	WorkingHours map[int][]*WorkingHour      // doctorID -> hours
+	Overrides    map[int]WorkingHourOverride // doctorID -> override (only one allowed)
+	OverrideByID map[int]WorkingHourOverride // overrideID -> override
+	NextID       int
+}
+
+func NewTestRepository() *TestRepository {
+	return &TestRepository{
+		WorkingHours: make(map[int][]*WorkingHour),
+		Overrides:    make(map[int]WorkingHourOverride),
+		OverrideByID: make(map[int]WorkingHourOverride),
+		NextID:       1,
+	}
+}
 
 func (p ProdRepository) SetWorkingHours(doctorID int, hours []WorkingHour) error {
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
@@ -252,5 +267,92 @@ func (p ProdRepository) DeleteOverride(idStr string, doctorID int) error {
 		return endpointerrors.EndpointError{StatusCode: 404, Err: errors.New("override not found")}
 	}
 
+	return nil
+}
+
+func (t TestRepository) GetWorkingHours(doctorID int, date time.Time) ([]*WorkingHour, error) {
+	hours, ok := t.WorkingHours[doctorID]
+	if !ok {
+		return []*WorkingHour{}, nil
+	}
+	return hours, nil
+}
+
+func (t TestRepository) AddPermanentChange(
+	doctorID int,
+	effectiveFrom time.Time,
+	hour WorkingHour,
+) error {
+
+	if time.Until(effectiveFrom) < 7*24*time.Hour {
+		return endpointerrors.EndpointError{
+			StatusCode: 400,
+			Err:        errors.New("permanent changes must be at least 7 days in advance"),
+		}
+	}
+
+	t.WorkingHours[doctorID] = append(t.WorkingHours[doctorID], &hour)
+
+	return nil
+}
+
+func (t TestRepository) AddOverride(o WorkingHourOverride) error {
+	// only one override allowed
+	if _, exists := t.Overrides[o.DoctorID]; exists {
+		return endpointerrors.EndpointError{
+			StatusCode: 400,
+			Err:        dbExistingOverrideError,
+		}
+	}
+
+	o.ID = t.NextID
+	t.NextID++
+
+	t.Overrides[o.DoctorID] = o
+	t.OverrideByID[o.ID] = o
+
+	return nil
+}
+
+func (t TestRepository) DeleteOverride(idStr string, doctorID int) error {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return endpointerrors.EndpointError{
+			StatusCode: 400,
+			Err:        parsingError,
+		}
+	}
+
+	override, exists := t.OverrideByID[id]
+	if !exists {
+		return endpointerrors.EndpointError{
+			StatusCode: 404,
+			Err:        errors.New("override not found"),
+		}
+	}
+
+	if override.DoctorID != doctorID {
+		return endpointerrors.EndpointError{
+			StatusCode: 404,
+			Err:        errors.New("override not found"),
+		}
+	}
+
+	delete(t.OverrideByID, id)
+	delete(t.Overrides, override.DoctorID)
+
+	return nil
+}
+
+func (t TestRepository) SetWorkingHours(doctorID int, hours []WorkingHour) error {
+	var res []*WorkingHour
+
+	for _, h := range hours {
+		hCopy := h
+		hCopy.DoctorID = doctorID
+		res = append(res, &hCopy)
+	}
+
+	t.WorkingHours[doctorID] = res
 	return nil
 }

@@ -262,7 +262,7 @@ func (t TestRepository) GetPatientById(id string) (*Patient, error) {
 	return &Patient{ID: 1, Name: "Test Patient"}, nil
 }
 
-func (t TestRepository) UpdatePatient(id string, patient Patient) (*Patient, error) {
+func (t TestRepository) UpdatePatient(id string, userId int, patient Patient) (*Patient, error) {
 	return &patient, nil
 }
 

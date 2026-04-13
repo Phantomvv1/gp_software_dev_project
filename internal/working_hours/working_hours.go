@@ -161,7 +161,8 @@ func DeleteOverride(repo WorkingHoursRepository) gin.HandlerFunc {
 		id := c.Param("id")
 
 		doctorID := c.GetInt("id")
-		role := byte(c.GetInt("role"))
+		roleAny, _ := c.Get("role")
+		role := roleAny.(byte)
 
 		if role != auth.Doctor {
 			c.JSON(403, gin.H{"error": "only doctors allowed"})

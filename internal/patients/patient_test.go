@@ -12,7 +12,6 @@ import (
 
 func setupRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
-
 	r := gin.Default()
 	repo := TestRepository{}
 

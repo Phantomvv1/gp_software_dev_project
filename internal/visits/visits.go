@@ -28,7 +28,7 @@ func CreateVisit(repo VisitsRepository) gin.HandlerFunc {
 
 		userID := c.GetInt("id")
 		roleAny, _ := c.Get("role")
-		role := roleAny.(byte)
+		role, _ := roleAny.(byte)
 
 		if byte(role) != auth.Patient {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Error: only patients can create visits"})
