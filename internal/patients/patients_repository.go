@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 
@@ -26,7 +27,7 @@ type PatientsRepository interface {
 	Register(patient Patient) (*Patient, error)
 	GetAllPatients(limit string) ([]*Patient, error)
 	GetPatientById(id string) (*Patient, error)
-	UpdatePatient(id string, patient Patient) (*Patient, error)
+	UpdatePatient(id string, userId int, patient Patient) (*Patient, error)
 	DeletePatient(id string) error
 }
 
@@ -148,12 +149,19 @@ func getPatient(conn *pgx.Conn, id int) (*Patient, error) {
 	return &p, nil
 }
 
-func (p ProdRepository) UpdatePatient(idStr string, patient Patient) (*Patient, error) {
-	id, err := strconv.ParseInt(idStr, 10, 64)
+func (p ProdRepository) UpdatePatient(idStr string, userId int, patient Patient) (*Patient, error) {
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		return nil, endpointerrors.EndpointError{
 			StatusCode: 400,
 			Err:        parsingError,
+		}
+	}
+
+	if id != userId {
+		return nil, endpointerrors.EndpointError{
+			StatusCode: http.StatusForbidden,
+			Err:        errors.New("Error: you are allowed to update only you profile"),
 		}
 	}
 
@@ -166,7 +174,7 @@ func (p ProdRepository) UpdatePatient(idStr string, patient Patient) (*Patient, 
 	}
 	defer conn.Close(context.Background())
 
-	err = updatePatient(conn, int(id), patient)
+	err = updatePatient(conn, id, patient)
 	if err != nil {
 		return nil, endpointerrors.EndpointError{
 			StatusCode: 500,

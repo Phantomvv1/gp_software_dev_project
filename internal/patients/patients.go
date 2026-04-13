@@ -74,7 +74,7 @@ func UpdatePatient(repo PatientsRepository) gin.HandlerFunc {
 			return
 		}
 
-		res, err := repo.UpdatePatient(id, p)
+		res, err := repo.UpdatePatient(id, c.GetInt("uers_id"), p)
 		if err != nil {
 			err := err.(endpointerrors.EndpointError)
 			c.JSON(err.StatusCode, gin.H{"error": err.Error()})

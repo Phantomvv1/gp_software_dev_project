@@ -5,6 +5,8 @@ CREATE TABLE normal_working_hours(
 
 	day_of_week int NOT NULL check(day_of_week in (1, 2, 3, 4, 5, 6, 7)), -- 1=Monday, 7=Sunday
 
+	effective_from timestamp not null,
+
 	start_time time NOT NULL,
 	end_time time NOT NULL,
 

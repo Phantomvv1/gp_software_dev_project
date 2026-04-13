@@ -26,10 +26,12 @@ func GetRoutes() *gin.Engine {
 	protected.Use(middleware.AuthMiddleware)
 
 	protected.GET("/me", func(c *gin.Context) {
+		roleAny, _ := c.Get("role")
+		role := roleAny.(byte)
 		c.JSON(200, gin.H{
 			"id":    c.GetInt("user_id"),
 			"email": c.GetString("email"),
-			"role":  c.GetInt("role"),
+			"role":  role,
 		})
 	})
 
