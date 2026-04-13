@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -26,6 +27,7 @@ func AuthMiddleware(c *gin.Context) {
 
 	id, role, email, err := auth.ValidateJWT(tokenStr)
 	if err != nil {
+		log.Println(err)
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": auth.ParsingTokenError.Error()})
 		return
 	}
