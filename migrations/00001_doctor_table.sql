@@ -4,8 +4,7 @@ create table if not exists doctors(
 	name text not null,
 	email text unique not null,
 	password text not null,
-	address text not null,
-	working_hours_id int REFERENCES working_hours(id) on delete cascade
+	address text not null
 );
 
 -- +goose Down
