@@ -42,7 +42,7 @@ func GenerateJWT(id int, accountType byte, email string) (string, error) {
 }
 
 // id, accountType, email, err
-func ValidateJWT(tokenString string) (string, byte, string, error) {
+func ValidateJWT(tokenString string) (int, byte, string, error) {
 	claims := &jwt.MapClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
@@ -54,31 +54,32 @@ func ValidateJWT(tokenString string) (string, byte, string, error) {
 	})
 
 	if err != nil || !token.Valid {
-		return "", 0, "", err
+		return 0, 0, "", err
 	}
 
 	expiration, ok := (*claims)["expiration"].(float64)
 	if !ok {
-		return "", 0, "", errors.New("Error parsing the expiration date of the token")
+		return 0, 0, "", errors.New("Error parsing the expiration date of the token")
 	}
 
 	if int64(expiration) < time.Now().Unix() {
-		return "", 0, "", errors.New("Error token has expired")
+		return 0, 0, "", errors.New("Error token has expired")
 	}
 
-	id, ok := (*claims)["id"].(string)
+	idFl, ok := (*claims)["id"].(float64)
 	if !ok {
-		return "", 0, "", errors.New("Error parsing the id")
+		return 0, 0, "", errors.New("Error parsing the id")
 	}
+	id := int(idFl)
 
 	accountType, ok := (*claims)["type"].(float64)
 	if !ok {
-		return "", 0, "", errors.New("Error parsing the account")
+		return 0, 0, "", errors.New("Error parsing the account")
 	}
 
 	email, ok := (*claims)["email"].(string)
 	if !ok {
-		return "", 0, "", errors.New("Error parsing the email")
+		return 0, 0, "", errors.New("Error parsing the email")
 	}
 
 	return id, byte(accountType), email, nil

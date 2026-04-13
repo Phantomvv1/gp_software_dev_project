@@ -121,7 +121,7 @@ func getAllDoctorsFromDB(conn *pgx.Conn, limit string) ([]*Doctor, error) {
 }
 
 func (p ProdRepository) GetDoctorById(idStr string) (*Doctor, error) {
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		return nil, endpointerrors.EndpointError{
 			StatusCode: http.StatusBadRequest,
@@ -138,7 +138,7 @@ func (p ProdRepository) GetDoctorById(idStr string) (*Doctor, error) {
 	}
 	defer conn.Close(context.Background())
 
-	doctor, err := getDoctorFromDB(conn, int(id))
+	doctor, err := getDoctorFromDB(conn, id)
 	if err != nil {
 		return nil, endpointerrors.EndpointError{
 			StatusCode: http.StatusInternalServerError,
