@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Phantomvv1/gp_software_dev_project/internal/auth"
 	endpointerrors "github.com/Phantomvv1/gp_software_dev_project/internal/endpoint_errors"
 	"github.com/jackc/pgx/v5"
 )
@@ -19,15 +20,15 @@ const (
 )
 
 var (
-	parsingError           = errors.New("Error: invalid id")
-	dbConnectionError      = errors.New("Error: database connection failed")
-	dbInsertVisitError     = errors.New("Error: unable to create visit")
-	dbSelectVisitError     = errors.New("Error: unable to fetch visit")
-	dbConflictError        = errors.New("Error: visit overlaps with another visit")
-	dbDeleteVisitError     = errors.New("Error: unable to delete visit")
-	notPersonalDoctorError = errors.New("Error: doctor is not patient's personal doctor")
-	tooSoonError           = errors.New("Error: visit must be created 24h in advance")
-	cancelTooLateError     = errors.New("Error: cannot cancel less than 12h before")
+	parsingError        = errors.New("Error: invalid id")
+	dbConnectionError   = errors.New("Error: database connection failed")
+	dbInsertVisitError  = errors.New("Error: unable to create visit")
+	dbSelectVisitError  = errors.New("Error: unable to fetch visit")
+	dbConflictError     = errors.New("Error: visit overlaps with another visit")
+	dbDeleteVisitError  = errors.New("Error: unable to delete visit")
+	dbSelectDoctorError = errors.New("Error: unable to get your doctor")
+	tooSoonError        = errors.New("Error: visit must be created 24h in advance")
+	cancelTooLateError  = errors.New("Error: cannot cancel less than 12h before")
 )
 
 type VisitsRepository interface {
@@ -49,17 +50,15 @@ func (p ProdRepository) CreateVisit(v Visit) (*Visit, error) {
 	}
 	defer conn.Close(context.Background())
 
-	// 1. Check personal doctor
-	var doctorID int
 	err = conn.QueryRow(context.Background(),
 		"select doctor_id from patients where id=$1",
 		v.PatientID,
-	).Scan(&doctorID)
+	).Scan(&v.DoctorID)
 
-	if err != nil || doctorID != v.DoctorID {
+	if err != nil {
 		return nil, endpointerrors.EndpointError{
 			StatusCode: http.StatusBadRequest,
-			Err:        notPersonalDoctorError,
+			Err:        dbSelectDoctorError,
 		}
 	}
 
@@ -135,8 +134,7 @@ func (p ProdRepository) CancelVisit(idStr string, userID int, role byte) error {
 	}
 	defer conn.Close(context.Background())
 
-	var visit Visit
-
+	visit := Visit{}
 	err = conn.QueryRow(context.Background(),
 		`select id, start_time, patient_id, doctor_id 
 		 from visits where id=$1`,
@@ -150,18 +148,17 @@ func (p ProdRepository) CancelVisit(idStr string, userID int, role byte) error {
 		}
 	}
 
-	// ownership
 	if role == auth.Patient && visit.PatientID != userID {
 		return endpointerrors.EndpointError{
 			StatusCode: http.StatusForbidden,
-			Err:        errors.New("not your visit"),
+			Err:        errors.New("Error: not your visit"),
 		}
 	}
 
 	if role == auth.Doctor && visit.DoctorID != userID {
 		return endpointerrors.EndpointError{
 			StatusCode: http.StatusForbidden,
-			Err:        errors.New("not your visit"),
+			Err:        errors.New("Error: not your visit"),
 		}
 	}
 
