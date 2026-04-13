@@ -7,6 +7,8 @@ import (
 	"github.com/Phantomvv1/gp_software_dev_project/internal/doctors"
 	"github.com/Phantomvv1/gp_software_dev_project/internal/middleware"
 	"github.com/Phantomvv1/gp_software_dev_project/internal/patients"
+	"github.com/Phantomvv1/gp_software_dev_project/internal/visits"
+	workinghours "github.com/Phantomvv1/gp_software_dev_project/internal/working_hours"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +16,8 @@ func GetRoutes() *gin.Engine {
 	authRepo := auth.ProdRepository{}
 	doctorRepository := doctors.ProdRepository{}
 	patientsRepo := patients.ProdRepository{}
+	whRepo := workinghours.ProdRepository{}
+	visitsRepo := visits.ProdRepository{}
 
 	r := gin.Default()
 
@@ -37,6 +41,8 @@ func GetRoutes() *gin.Engine {
 
 	addDoctorRoutes(protected, doctorRepository)
 	addPatientRoutes(protected, patientsRepo)
+	addWorkingHoursRoutes(protected, whRepo)
+	addVisitRoutes(protected, visitsRepo)
 
 	return r
 }
@@ -57,4 +63,23 @@ func addPatientRoutes(r *gin.RouterGroup, repo patients.PatientsRepository) {
 	pats.GET("/:id", patients.GetPatientById(repo))
 	pats.PUT("/:id", patients.UpdatePatient(repo))
 	pats.DELETE("/:id", patients.DeletePatient(repo))
+}
+
+func addWorkingHoursRoutes(r *gin.RouterGroup, repo workinghours.WorkingHoursRepository) {
+	wh := r.Group("/working-hours")
+
+	wh.POST("", workinghours.SetWorkingHours(repo))
+	wh.POST("/override", workinghours.AddOverride(repo))
+	wh.DELETE("/override/:id", workinghours.DeleteOverride(repo))
+	wh.POST("/permanent", workinghours.AddPermanentChange(repo))
+
+	wh.GET("/:doctor_id", workinghours.GetWorkingHours(repo))
+}
+
+func addVisitRoutes(r *gin.RouterGroup, repo visits.VisitsRepository) {
+	v := r.Group("/visits")
+
+	v.POST("", visits.CreateVisit(repo))
+	v.DELETE("/:id", visits.CancelVisit(repo))
+	v.GET("/", visits.GetMyVisits(repo))
 }
