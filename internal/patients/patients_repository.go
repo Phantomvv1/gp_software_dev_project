@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/Phantomvv1/gp_software_dev_project/internal/auth"
 	endpointerrors "github.com/Phantomvv1/gp_software_dev_project/internal/endpoint_errors"
 	"github.com/jackc/pgx/v5"
 )
@@ -43,6 +44,8 @@ func (p ProdRepository) Register(patient Patient) (*Patient, error) {
 		}
 	}
 	defer conn.Close(context.Background())
+
+	patient.Password = auth.SHA512(patient.Password)
 
 	registeredPatient, err := insertPatient(conn, patient)
 	if err != nil {
