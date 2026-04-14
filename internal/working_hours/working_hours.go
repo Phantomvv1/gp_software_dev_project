@@ -42,7 +42,7 @@ func SetWorkingHours(repo WorkingHoursRepository) gin.HandlerFunc {
 
 		roleAny, _ := c.Get("role")
 		role := roleAny.(byte)
-		doctorID := c.GetInt("id")
+		doctorID := c.GetInt("user_id")
 
 		if role != auth.Doctor {
 			c.JSON(403, gin.H{"error": "only doctors allowed"})
@@ -71,7 +71,7 @@ func AddOverride(repo WorkingHoursRepository) gin.HandlerFunc {
 
 		roleAny, _ := c.Get("role")
 		role := roleAny.(byte)
-		o.DoctorID = c.GetInt("id")
+		o.DoctorID = c.GetInt("user_id")
 
 		if role != auth.Doctor {
 			c.JSON(403, gin.H{"error": "only doctors allowed"})
@@ -103,7 +103,7 @@ func AddPermanentChange(repo WorkingHoursRepository) gin.HandlerFunc {
 
 		roleAny, _ := c.Get("role")
 		role := roleAny.(byte)
-		doctorID := c.GetInt("id")
+		doctorID := c.GetInt("user_id")
 
 		if role != auth.Doctor {
 			c.JSON(403, gin.H{"error": "only doctors allowed"})
@@ -161,7 +161,7 @@ func DeleteOverride(repo WorkingHoursRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		doctorID := c.GetInt("id")
+		doctorID := c.GetInt("user_id")
 		roleAny, _ := c.Get("role")
 		role := roleAny.(byte)
 

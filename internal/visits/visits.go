@@ -26,7 +26,7 @@ func CreateVisit(repo VisitsRepository) gin.HandlerFunc {
 			return
 		}
 
-		userID := c.GetInt("id")
+		userID := c.GetInt("user_id")
 		roleAny, _ := c.Get("role")
 		role, _ := roleAny.(byte)
 
@@ -52,7 +52,7 @@ func CancelVisit(repo VisitsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		userID := c.GetInt("id")
+		userID := c.GetInt("user_id")
 		roleAny, _ := c.Get("role")
 		role := roleAny.(byte)
 
@@ -69,7 +69,7 @@ func CancelVisit(repo VisitsRepository) gin.HandlerFunc {
 
 func GetMyVisits(repo VisitsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID := c.GetInt("id")
+		userID := c.GetInt("user_id")
 		roleAny, _ := c.Get("role")
 		role := roleAny.(byte)
 
