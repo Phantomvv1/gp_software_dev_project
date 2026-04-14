@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: gp_project_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER:-gpuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gppassword}
+      POSTGRES_DB:       ${POSTGRES_DB:-gpdb}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gpuser} -d ${POSTGRES_DB:-gpdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gp_project_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "42069:42069"
+    environment:
+      JWT_KEY:  ${JWT_KEY}
+      API_KEY:  ${API_KEY}
+      DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-gpuser}:${POSTGRES_PASSWORD:-gppassword}@db:5432/${POSTGRES_DB:-gpdb}?sslmode=disable}
+
+volumes:
+  pgdata:

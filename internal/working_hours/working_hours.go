@@ -1,6 +1,7 @@
 package workinghours
 
 import (
+	"net/http"
 	"strconv"
 	"time"
 
@@ -35,7 +36,7 @@ func SetWorkingHours(repo WorkingHoursRepository) gin.HandlerFunc {
 		var hours []WorkingHour
 
 		if err := c.ShouldBindJSON(&hours); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
